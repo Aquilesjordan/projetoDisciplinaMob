@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "id": "2019",
+      "username": "aquiles",
+      "password": "aquiles"
+    },
+    {
+      "id": "c766",
+      "username": "carol",
+      "password": "carol"
+    },
+    {
+      "id": "6c56",
+      "username": "ba",
+      "password": "ba"
+    },
+    {
+      "id": "d643",
+      "username": "bo",
+      "password": "bo"
+    },
+    {
+      "id": "2002",
+      "username": "lo",
+      "password": "lo"
+    }
+  ]
+}
