@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, FlatList, Image, StyleSheet, Alert } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, Image, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function BooksScreen() {
-  const [bookName, setBookName] = useState('');
-  const [bookImage, setBookImage] = useState('');
   const [books, setBooks] = useState([]);
+  const [newBookName, setNewBookName] = useState('');
+  const [newBookImage, setNewBookImage] = useState('');
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchBooks();
+    }, [])
+  );
 
   const fetchBooks = async () => {
     try {
@@ -18,40 +21,6 @@ export default function BooksScreen() {
       setBooks(data);
     } catch (error) {
       console.error('Error fetching books:', error);
-    }
-  };
-
-  const handleAddBook = async () => {
-    if (!bookName || !bookImage) {
-      Alert.alert('Error', 'Please enter both the book name and image link.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3000/books', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: bookName,
-          image: bookImage,
-          isFavorite: false,
-          rating: 0
-        }),
-      });
-
-      if (response.ok) {
-        setBookName('');
-        setBookImage('');
-        fetchBooks(); // Atualiza a lista de livros
-        Alert.alert('Success', 'Book added successfully!');
-      } else {
-        Alert.alert('Error', 'Failed to add book');
-      }
-    } catch (error) {
-      console.error('Error adding book:', error);
-      Alert.alert('Error', 'Something went wrong');
     }
   };
 
@@ -64,18 +33,18 @@ export default function BooksScreen() {
         },
         body: JSON.stringify({ isFavorite: !book.isFavorite }),
       });
-  
+
       if (response.ok) {
         fetchBooks(); // Atualiza a lista de livros
       } else {
-        Alert.alert('Error', 'Failed to update favorite status');
+        console.error('Failed to update favorite status');
       }
     } catch (error) {
       console.error('Error updating favorite status:', error);
     }
   };
-  
-  const handleRating = async (book, rating) => {
+
+  const rateBook = async (book, rating) => {
     try {
       const response = await fetch(`http://localhost:3000/books/${book.id}`, {
         method: 'PATCH',
@@ -84,53 +53,76 @@ export default function BooksScreen() {
         },
         body: JSON.stringify({ rating }),
       });
-  
+
       if (response.ok) {
         fetchBooks(); // Atualiza a lista de livros
       } else {
-        Alert.alert('Error', 'Failed to update rating');
+        console.error('Failed to update rating');
       }
     } catch (error) {
       console.error('Error updating rating:', error);
     }
   };
-  
 
   const renderStars = (book) => {
-    return (
-      <View style={styles.stars}>
-        {[...Array(5)].map((_, index) => (
-          <TouchableOpacity key={index} onPress={() => handleRating(book, index + 1)}>
-            <FontAwesome
-              name={index < book.rating ? 'star' : 'star-o'}
-              size={24}
-              color={index < book.rating ? '#ffd700' : '#ccc'}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity key={i} onPress={() => rateBook(book, i)}>
+          <Ionicons name={i <= book.rating ? 'star' : 'star-outline'} size={24} color={i <= book.rating ? 'gold' : 'black'} />
+        </TouchableOpacity>
+      );
+    }
+    return stars;
+  };
+
+  const addBook = async () => {
+    try {
+      const newBook = {
+        name: newBookName,
+        image: newBookImage,
+        isFavorite: false,
+        rating: 0,
+      };
+
+      const response = await fetch('http://localhost:3000/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newBook),
+      });
+
+      if (response.ok) {
+        fetchBooks(); // Atualiza a lista de livros
+        setNewBookName('');
+        setNewBookImage('');
+      } else {
+        console.error('Failed to add book');
+      }
+    } catch (error) {
+      console.error('Error adding book:', error);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Books</Text>
-      <TextInput
-        value={bookName}
-        onChangeText={setBookName}
-        placeholder="Enter book name"
-        style={styles.input}
-      />
-      <TextInput
-        value={bookImage}
-        onChangeText={setBookImage}
-        placeholder="Enter image link"
-        style={styles.input}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleAddBook}>
-        <Text style={styles.buttonText}>Add Book</Text>
-      </TouchableOpacity>
-
+      <View style={styles.addBookContainer}>
+        <TextInput
+          value={newBookName}
+          onChangeText={setNewBookName}
+          placeholder="Book Name"
+          style={styles.input}
+        />
+        <TextInput
+          value={newBookImage}
+          onChangeText={setNewBookImage}
+          placeholder="Book Image URL"
+          style={styles.input}
+        />
+        <Button title="Add Book" onPress={addBook} />
+      </View>
       <FlatList
         data={books}
         keyExtractor={(item) => item.id.toString()}
@@ -138,15 +130,15 @@ export default function BooksScreen() {
           <View style={styles.bookItem}>
             <Image source={{ uri: item.image }} style={styles.bookImage} />
             <View style={styles.bookDetails}>
-              <Text style={styles.bookName}>{item.name}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bookName}>{item.name}</Text>
+                <View style={styles.starsContainer}>
+                  {renderStars(item)}
+                </View>
+              </View>
               <TouchableOpacity onPress={() => toggleFavorite(item)}>
-                <FontAwesome
-                  name={item.isFavorite ? 'heart' : 'heart-o'}
-                  size={24}
-                  color={item.isFavorite ? 'red' : '#ccc'}
-                />
+                <Ionicons name={item.isFavorite ? 'heart' : 'heart-outline'} size={24} color={item.isFavorite ? 'red' : 'black'} />
               </TouchableOpacity>
-              {renderStars(item)}
             </View>
           </View>
         )}
@@ -167,24 +159,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  addBookContainer: {
+    marginBottom: 20,
+  },
   input: {
     backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 15,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#ccc',
-  },
-  button: {
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
   bookItem: {
     flexDirection: 'row',
@@ -203,14 +187,16 @@ const styles = StyleSheet.create({
   },
   bookDetails: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   bookName: {
     fontSize: 18,
     marginBottom: 5,
   },
-  stars: {
+  starsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginTop: 5,
   },
 });

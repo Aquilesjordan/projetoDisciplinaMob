@@ -6,13 +6,19 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    if (username === '' || password === '') {
+      Alert.alert('Error', 'Please fill in both fields.');
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:3000/users?username=${username}&password=${password}`);
+      const response = await fetch(`http://localhost:3000/users?username=${username}`);
       const data = await response.json();
 
-      if (data.length > 0) {
+      if (data.length === 1 && data[0].password === password) { 
+        // Verifica se o usuário foi encontrado e se a senha corresponde
         Alert.alert('Success', 'Login successful!');
-        navigation.navigate('Main'); // Navega para a tela de tabs
+        navigation.navigate('Main'); // Navega para a tela de tabs (BooksScreen e FavoritesScreen)
       } else {
         Alert.alert('Error', 'Invalid credentials');
       }

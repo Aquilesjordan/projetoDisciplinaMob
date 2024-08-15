@@ -1,36 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Biblioteca de ícones
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function FavoritesScreen() {
-  const [favoriteBooks, setFavoriteBooks] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
-  useEffect(() => {
-    fetchFavoriteBooks();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchFavorites();
+    }, [])
+  );
 
-  const fetchFavoriteBooks = async () => {
+  const fetchFavorites = async () => {
     try {
       const response = await fetch('http://localhost:3000/books?isFavorite=true');
       const data = await response.json();
-      setFavoriteBooks(data);
+      setFavorites(data);
     } catch (error) {
-      console.error('Error fetching favorite books:', error);
+      console.error('Error fetching favorites:', error);
     }
   };
 
-  const removeFavorite = async (book) => {
+  const toggleFavorite = async (book) => {
     try {
       const response = await fetch(`http://localhost:3000/books/${book.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isFavorite: false }),
+        body: JSON.stringify({ isFavorite: !book.isFavorite }),
       });
 
       if (response.ok) {
-        fetchFavoriteBooks(); // Atualiza a lista de favoritos
+        fetchFavorites(); // Atualiza a lista de favoritos
       } else {
         console.error('Failed to update favorite status');
       }
@@ -41,26 +44,22 @@ export default function FavoritesScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Favorite Books</Text>
-      {favoriteBooks.length > 0 ? (
-        <FlatList
-          data={favoriteBooks}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.bookItem}>
-              <Image source={{ uri: item.image }} style={styles.bookImage} />
-              <View style={styles.bookDetails}>
-                <Text style={styles.bookName}>{item.name}</Text>
-                <TouchableOpacity onPress={() => removeFavorite(item)}>
-                  <Ionicons name="heart" size={24} color="red" />
-                </TouchableOpacity>
-              </View>
+      <Text style={styles.title}>Favorites</Text>
+      <FlatList
+        data={favorites}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.bookItem}>
+            <Image source={{ uri: item.image }} style={styles.bookImage} />
+            <View style={styles.bookDetails}>
+              <Text style={styles.bookName}>{item.name}</Text>
+              <TouchableOpacity onPress={() => toggleFavorite(item)}>
+                <Ionicons name={item.isFavorite ? 'heart' : 'heart-outline'} size={24} color={item.isFavorite ? 'red' : 'black'} />
+              </TouchableOpacity>
             </View>
-          )}
-        />
-      ) : (
-        <Text style={styles.noFavorites}>No favorite books yet!</Text>
-      )}
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -100,12 +99,5 @@ const styles = StyleSheet.create({
   },
   bookName: {
     fontSize: 18,
-    marginBottom: 5,
-  },
-  noFavorites: {
-    textAlign: 'center',
-    fontSize: 18,
-    color: '#888',
-    marginTop: 20,
   },
 });
