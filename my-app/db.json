@@ -24,6 +24,11 @@
       "id": "2002",
       "username": "lo",
       "password": "lo"
+    },
+    {
+      "id": "c0a8",
+      "username": "aq",
+      "password": "aq"
     }
   ],
   "books": [
@@ -40,6 +45,20 @@
       "image": "https://m.media-amazon.com/images/I/51jiQtSEwDL._SY445_SX342_.jpg",
       "isFavorite": true,
       "rating": 3
+    },
+    {
+      "id": "b980",
+      "name": "Dragon ball Gt",
+      "image": "https://m.media-amazon.com/images/I/91wgX81vizS._AC_UL320_.jpg",
+      "isFavorite": false,
+      "rating": 0
+    },
+    {
+      "id": "f6bd",
+      "name": "IT",
+      "image": "https://upload.wikimedia.org/wikipedia/pt/thumb/c/cc/A_coisa.jpg/230px-A_coisa.jpg",
+      "isFavorite": false,
+      "rating": 0
     }
   ]
 }
