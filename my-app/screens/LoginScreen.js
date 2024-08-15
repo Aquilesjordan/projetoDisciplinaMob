@@ -18,7 +18,7 @@ export default function LoginScreen({ navigation }) {
       if (data.length === 1 && data[0].password === password) { 
         // Verifica se o usuário foi encontrado e se a senha corresponde
         Alert.alert('Success', 'Login successful!');
-        navigation.navigate('Main'); // Navega para a tela de tabs (BooksScreen e FavoritesScreen)
+        navigation.navigate('Sair'); // Navega para a tela de tabs (BooksScreen e FavoritesScreen)
       } else {
         Alert.alert('Error', 'Invalid credentials');
       }

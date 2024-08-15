@@ -1,18 +1,15 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, Image, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, StyleSheet, Alert } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
-export default function BooksScreen() {
+export default function BooksScreen({ navigation }) {
   const [books, setBooks] = useState([]);
   const [newBookName, setNewBookName] = useState('');
   const [newBookImage, setNewBookImage] = useState('');
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchBooks();
-    }, [])
-  );
+  useEffect(() => {
+    fetchBooks();
+  }, []);
 
   const fetchBooks = async () => {
     try {
@@ -24,124 +21,154 @@ export default function BooksScreen() {
     }
   };
 
-  const toggleFavorite = async (book) => {
-    try {
-      const response = await fetch(`http://localhost:3000/books/${book.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isFavorite: !book.isFavorite }),
-      });
-
-      if (response.ok) {
-        fetchBooks(); // Atualiza a lista de livros
-      } else {
-        console.error('Failed to update favorite status');
-      }
-    } catch (error) {
-      console.error('Error updating favorite status:', error);
+  const handleAddBook = async () => {
+    if (newBookName === '' || newBookImage === '') {
+      Alert.alert('Error', 'Please fill in both fields.');
+      return;
     }
-  };
 
-  const rateBook = async (book, rating) => {
     try {
-      const response = await fetch(`http://localhost:3000/books/${book.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ rating }),
-      });
-
-      if (response.ok) {
-        fetchBooks(); // Atualiza a lista de livros
-      } else {
-        console.error('Failed to update rating');
-      }
-    } catch (error) {
-      console.error('Error updating rating:', error);
-    }
-  };
-
-  const renderStars = (book) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <TouchableOpacity key={i} onPress={() => rateBook(book, i)}>
-          <Ionicons name={i <= book.rating ? 'star' : 'star-outline'} size={24} color={i <= book.rating ? 'gold' : 'black'} />
-        </TouchableOpacity>
-      );
-    }
-    return stars;
-  };
-
-  const addBook = async () => {
-    try {
-      const newBook = {
-        name: newBookName,
-        image: newBookImage,
-        isFavorite: false,
-        rating: 0,
-      };
-
       const response = await fetch('http://localhost:3000/books', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newBook),
+        body: JSON.stringify({
+          name: newBookName,
+          image: newBookImage,
+          isFavorite: false,
+          rating: 0,
+        }),
       });
-
       if (response.ok) {
-        fetchBooks(); // Atualiza a lista de livros
+        fetchBooks();
         setNewBookName('');
         setNewBookImage('');
-      } else {
-        console.error('Failed to add book');
       }
     } catch (error) {
       console.error('Error adding book:', error);
     }
   };
 
+  const handleToggleFavorite = async (id, isFavorite) => {
+    try {
+      const response = await fetch(`http://localhost:3000/books/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isFavorite: !isFavorite,
+        }),
+      });
+      if (response.ok) {
+        fetchBooks(); // Atualiza a lista de livros após a alteração
+      }
+    } catch (error) {
+      console.error('Error updating favorite status:', error);
+    }
+  };
+
+  const handleRatingChange = async (id, rating) => {
+    try {
+      const response = await fetch(`http://localhost:3000/books/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating: rating,
+        }),
+      });
+      if (response.ok) {
+        fetchBooks(); // Atualiza a lista de livros após a alteração
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error);
+    }
+  };
+
+  const handleDeleteBook = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/books/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchBooks(); // Atualiza a lista de livros após a exclusão
+      }
+    } catch (error) {
+      console.error('Error deleting book:', error);
+    }
+  };
+
+  const renderBookItem = ({ item }) => (
+    <View style={styles.bookContainer}>
+      <Image source={{ uri: item.image }} style={styles.bookImage} />
+      <View style={styles.bookDetails}>
+        <Text style={styles.bookName}>{item.name}</Text>
+
+        <View style={styles.iconContainer}>
+          {/* Botão de favoritar */}
+          <TouchableOpacity onPress={() => handleToggleFavorite(item.id, item.isFavorite)}>
+            <FontAwesome
+              name={item.isFavorite ? 'heart' : 'heart-o'}
+              size={24}
+              color="red"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+
+          {/* Botão de excluir */}
+          <TouchableOpacity onPress={() => handleDeleteBook(item.id)}>
+            <FontAwesome
+              name="trash"
+              size={24}
+              color="gray"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Estrelas para avaliação */}
+        <View style={styles.ratingContainer}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => handleRatingChange(item.id, star)}>
+              <FontAwesome
+                name={star <= item.rating ? 'star' : 'star-o'}
+                size={24}
+                color="gold"
+                style={styles.starIcon}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Books</Text>
-      <View style={styles.addBookContainer}>
-        <TextInput
-          value={newBookName}
-          onChangeText={setNewBookName}
-          placeholder="Book Name"
-          style={styles.input}
-        />
-        <TextInput
-          value={newBookImage}
-          onChangeText={setNewBookImage}
-          placeholder="Book Image URL"
-          style={styles.input}
-        />
-        <Button title="Add Book" onPress={addBook} />
-      </View>
+      <TextInput
+        value={newBookName}
+        onChangeText={setNewBookName}
+        placeholder="Enter book name"
+        style={styles.input}
+      />
+      <TextInput
+        value={newBookImage}
+        onChangeText={setNewBookImage}
+        placeholder="Enter book image URL"
+        style={styles.input}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleAddBook}>
+        <Text style={styles.buttonText}>Add Book</Text>
+      </TouchableOpacity>
       <FlatList
         data={books}
+        renderItem={renderBookItem}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.bookItem}>
-            <Image source={{ uri: item.image }} style={styles.bookImage} />
-            <View style={styles.bookDetails}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.bookName}>{item.name}</Text>
-                <View style={styles.starsContainer}>
-                  {renderStars(item)}
-                </View>
-              </View>
-              <TouchableOpacity onPress={() => toggleFavorite(item)}>
-                <Ionicons name={item.isFavorite ? 'heart' : 'heart-outline'} size={24} color={item.isFavorite ? 'red' : 'black'} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        contentContainerStyle={styles.bookList}
       />
     </View>
   );
@@ -156,47 +183,63 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
     textAlign: 'center',
-  },
-  addBookContainer: {
     marginBottom: 20,
   },
   input: {
     backgroundColor: '#fff',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: '#ccc',
   },
-  bookItem: {
+  button: {
+    backgroundColor: '#007bff',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  bookList: {
+    paddingTop: 10,
+  },
+  bookContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
-    padding: 10,
     backgroundColor: '#fff',
+    padding: 10,
     borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#ccc',
   },
   bookImage: {
     width: 50,
     height: 50,
-    marginRight: 15,
+    marginRight: 10,
   },
   bookDetails: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   bookName: {
     fontSize: 18,
-    marginBottom: 5,
+    fontWeight: 'bold',
   },
-  starsContainer: {
+  iconContainer: {
     flexDirection: 'row',
-    marginTop: 5,
+    marginVertical: 10,
+  },
+  icon: {
+    marginHorizontal: 10,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    marginVertical: 10,
+  },
+  starIcon: {
+    marginRight: 5,
   },
 });

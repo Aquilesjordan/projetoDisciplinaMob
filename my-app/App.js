@@ -10,9 +10,9 @@ import BooksScreen from './screens/BooksScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function MainTabs() {
+function SairTabs() {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
       <Tab.Screen name="Books" component={BooksScreen} />
     </Tab.Navigator>
@@ -22,10 +22,10 @@ function MainTabs() {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="Sair" component={SairTabs} />
       </Stack.Navigator>
     </NavigationContainer>
   );
