@@ -107,30 +107,8 @@ export default function BooksScreen({ navigation }) {
       <View style={styles.bookDetails}>
         <Text style={styles.bookName}>{item.name}</Text>
 
-        <View style={styles.iconContainer}>
-          {/* Botão de favoritar */}
-          <TouchableOpacity onPress={() => handleToggleFavorite(item.id, item.isFavorite)}>
-            <FontAwesome
-              name={item.isFavorite ? 'heart' : 'heart-o'}
-              size={24}
-              color="red"
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-
-          {/* Botão de excluir */}
-          <TouchableOpacity onPress={() => handleDeleteBook(item.id)}>
-            <FontAwesome
-              name="trash"
-              size={24}
-              color="gray"
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Estrelas para avaliação */}
-        <View style={styles.ratingContainer}>
+        {/* Estrelas para avaliação e ícones de favoritar/deletar */}
+        <View style={styles.actionContainer}>
           {[1, 2, 3, 4, 5].map((star) => (
             <TouchableOpacity key={star} onPress={() => handleRatingChange(item.id, star)}>
               <FontAwesome
@@ -141,6 +119,22 @@ export default function BooksScreen({ navigation }) {
               />
             </TouchableOpacity>
           ))}
+          <TouchableOpacity onPress={() => handleToggleFavorite(item.id, item.isFavorite)}>
+            <FontAwesome
+              name={item.isFavorite ? 'heart' : 'heart-o'}
+              size={24}
+              color="red"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteBook(item.id)}>
+            <FontAwesome
+              name="trash"
+              size={24}
+              color="gray"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -214,12 +208,18 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: '#fff',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
   },
   bookImage: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
+    width: 60,
+    height: 60,
+    marginRight: 15,
+    borderRadius: 5,
   },
   bookDetails: {
     flex: 1,
@@ -228,18 +228,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  iconContainer: {
+  actionContainer: {
     flexDirection: 'row',
-    marginVertical: 10,
+    alignItems: 'center',
+    marginTop: 10,
   },
   icon: {
-    marginHorizontal: 10,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    marginVertical: 10,
+    marginLeft: 40,
   },
   starIcon: {
-    marginRight: 5,
+    marginHorizontal: 2,
   },
 });
